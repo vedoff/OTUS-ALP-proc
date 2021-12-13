@@ -17,7 +17,8 @@ get_env_user(){
 
 # Получение CMD
 get_cmd(){
-  cat /proc/$pc/cmdline | head -c 20
+  # Получаем строку убираем нулевой байт, перенос строки и пробелы, выводим первые 100 символов
+  cat /proc/$pc/cmdline | strings -1  |  tr -d '\n' | tr -d ' '| head -c 100
 }
 
 # Получение состояния процесса
@@ -33,20 +34,21 @@ get_vmrss(){
 
 get_uniq_user(){
   # Форматируем вывод текста на экран
-  format_line="%-20s%-10s%-10s%-10s%-10s\n"
+  format_line="%-20s%-10s%-10s%-10s%-100s\n"
   printf "$format_line" USER PID STAT VMRSS COMMAND
-
+  
+  # Получаем все папки из /proc у которых только цифры
+  # и сортируем их в порядке возростания
   for pc in `ls /proc | grep "^[0-9]" | sort -n`
   do
-    # Добавляем PID
+    # Получаем путь к директории файловой системы сервиса
     if [ -f /proc/$pc/status ]
         then
-        #PID=$pc
-        # Выводим результат
-        #echo $PID
+        # Вывод скрипта только для залогиненго пользователя
         if [[ $(get_env_user) == $(get_username) ]]
         then
         PID=$pc
+        # Выводим результат
         printf "$format_line" $(get_username) $PID $(get_stat) $(get_vmrss) $(get_cmd)
         fi
     fi
@@ -55,22 +57,57 @@ get_uniq_user(){
 
 get_param_ps(){
   # Форматируем вывод текста на экран
-  format_line="%-20s%-10s%-10s%-10s%-10s\n"
+  format_line="%-20s%-10s%-10s%-10s%-100s\n"
   printf "$format_line" USER PID STAT VMRSS COMMAND
 
   # Получаем все папки из /proc у которых только цифры
   # и сортируем их в порядке возростания
   for pc in `ls /proc | grep "^[0-9]" | sort -n`
   do
-    #echo $pc
-    # Добавляем PID
+    # Получаем путь к директории файловой системы сервиса
     if [ -f /proc/$pc/status ]
         then
-        PID=$pc
-        # Выводим результат
-        printf "$format_line" $(get_username) $PID $(get_stat) $(get_vmrss) $(get_cmd)
+        getcmd=`cat /proc/$pc/cmdline | strings -1`
+      if [ "$getcmd" != '' ]
+        then
+           getcmd=`cat /proc/$pc/cmdline | strings -1  |  tr -d '\n' | tr -d ' '| head -c 100`
+            PID=$pc
+           # Выводим результат
+           printf "$format_line" $(get_username) $PID $(get_stat) $(get_vmrss) $getcmd
+           else
+           getcmd="[`awk '/Name/{print $2}' /proc/$pc/status`]"
+            PID=$pc
+           # Выводим результат
+           printf "$format_line" $(get_username) $PID $(get_stat) $(get_vmrss) $getcmd
+      fi
     fi
   done
 }
 
-get_uniq_user
+get_param_ps_(){
+  # Форматируем вывод текста на экран
+  format_line="%-20s%-10s%-10s%-10s%-100s\n"
+  printf "$format_line" USER PID STAT VMRSS COMMAND
+
+  # Получаем все папки из /proc у которых только цифры
+  # и сортируем их в порядке возростания
+  for pc in `ls /proc | grep "^[0-9]" | sort -n`
+  do
+    # Получаем путь к директории файловой системы сервиса
+    if [ -f /proc/$pc/status ]
+    then
+      PID=$pc
+      # Выводим результат
+      printf "$format_line" $(get_username) $PID $(get_stat) $(get_vmrss) $(get_cmd)
+    fi
+  done
+}
+
+case "$1" in
+  a  ) get_uniq_user;;
+ # x  ) get_param_ps_;;
+  ax ) get_param_ps;;
+  #[0-9]   ) echo "Цифра";;
+  *   ) echo "Не допустимая комманда";;
+esac  # Допускается указыватль диапазоны символов в [квадратных скобках].
+
