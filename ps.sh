@@ -48,11 +48,15 @@ get_uniq_user(){
         if [[ $(get_env_user) == $(get_username) ]]
         then
         PID=$pc
+        # Перехват сигнала останова CTRL ^C и для продолжения требует нажатия ENTER
+        trap "echo 'Давайте продолжим?' && read -p 'Тогда жмем - ENTER:'" SIGINT 
         # Выводим результат
         printf "$format_line" $(get_username) $PID $(get_stat) $(get_vmrss) $(get_cmd)
         fi
     fi
   done
+  # Просто выводим сообщение при закрытии скрипта
+  trap "echo Спаисбо, что воспользовались моим скриптом!!!" EXIT
 }
 
 get_param_ps(){
@@ -77,11 +81,15 @@ get_param_ps(){
            else
            getcmd="[`awk '/Name/{print $2}' /proc/$pc/status`]"
             PID=$pc
+            # Перехват сигнала останова CTRL ^C и для продолжения требует нажатия ENTER
+            trap "echo 'Давайте продолжим?' && read -p 'Тогда жмем - ENTER:'" SIGINT 
            # Выводим результат
            printf "$format_line" $(get_username) $PID $(get_stat) $(get_vmrss) $getcmd
       fi
     fi
-  done
+  done 
+  # Просто выводим сообщение при закрытии скрипта
+  trap "echo Спаисбо, что воспользовались моим скриптом!!!" EXIT
 }
 
 get_param_ps_(){
@@ -97,16 +105,31 @@ get_param_ps_(){
     if [ -f /proc/$pc/status ]
     then
       PID=$pc
+      # Перехват сигнала останова CTRL ^C и для продолжения требует нажатия ENTER
+      trap "echo 'Давайте продолжим?' && read -p 'Тогда жмем - ENTER:'" SIGINT  
       # Выводим результат
       printf "$format_line" $(get_username) $PID $(get_stat) $(get_vmrss) $(get_cmd)
     fi
   done
+  # Просто выводим сообщение при закрытии скрипта
+  trap "echo Спаисбо, что воспользовались моим скриптом!!!" EXIT
+}
+
+get_trap(){
+trap "echo Goodbye..." SIGINT
+count=1
+while [ $count -le 5 ]
+do
+echo "Loop #$count"
+sleep 1
+count=$(( $count + 1 ))
+done
 }
 
 case "$1" in
-  a  ) get_uniq_user;;
+  a  ) get_uniq_user;; # - Имитирует ps au
   x  ) get_param_ps_;; # - Промежуточный вариант, так для полноты исседования
-  ax ) get_param_ps;;
+  ax ) get_param_ps;;  # - Имитирует ps ax
   #[0-9]   ) echo "Цифра";; - оставил что бы не забыть!!!
   #[a-z]   ) echo "Буква";; - оставил что бы не забыть!!!
   *   ) echo "Не допустимая комманда";;
