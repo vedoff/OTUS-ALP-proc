@@ -115,6 +115,7 @@ get_param_ps_(){
   trap "echo Спаисбо, что воспользовались моим скриптом!!!" EXIT
 }
 
+# Ресурс на хабре https://habr.com/en/company/ruvds/blog/326826/
 get_trap(){
 trap "echo Goodbye..." SIGINT
 count=1
@@ -126,6 +127,7 @@ count=$(( $count + 1 ))
 done
 }
 
+# Вывод работы логики в зависимости от входящих параметров
 case "$1" in
   a  ) get_uniq_user;; # - Имитирует ps au
   x  ) get_param_ps_;; # - Промежуточный вариант, так для полноты исседования
